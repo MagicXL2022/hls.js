@@ -1064,6 +1064,12 @@ function parsePMT(data, offset, typeSupported, isSampleAes) {
         break;
 
       case 0x24:
+        this.observer.emit(Events.ERROR, Events.ERROR, {
+          type: ErrorTypes.MEDIA_ERROR,
+          details: ErrorDetails.MANIFEST_INCOMPATIBLE_CODECS_ERROR,
+          fatal: false,
+          reason: 'Unsupported HEVC stream type found 0x24',
+        });
         logger.warn('Unsupported HEVC stream type found');
         break;
 
