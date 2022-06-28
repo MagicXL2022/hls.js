@@ -46,7 +46,7 @@ import {
   BackBufferData,
   LiveBackBufferData,
   TrackLoadingData,
-  BufferFlushedData,
+  BufferFlushedData
 } from './types/events';
 
 /**
@@ -166,6 +166,8 @@ export enum Events {
   LIVE_BACK_BUFFER_REACHED = 'hlsLiveBackBufferReached',
   // fired when the back buffer is reached as defined by the backBufferLength config option - data : { bufferEnd: number }
   BACK_BUFFER_REACHED = 'hlsBackBufferReached',
+  //TODO Magic 扩展
+  RECORDING = 'recording'
 }
 
 export interface HlsListeners {
@@ -363,12 +365,14 @@ export interface HlsListeners {
     data: BackBufferData
   ) => void;
 }
+
 export interface HlsEventEmitter {
   on<E extends keyof HlsListeners, Context = undefined>(
     event: E,
     listener: HlsListeners[E],
     context?: Context
   ): void;
+
   once<E extends keyof HlsListeners, Context = undefined>(
     event: E,
     listener: HlsListeners[E],
@@ -376,6 +380,7 @@ export interface HlsEventEmitter {
   ): void;
 
   removeAllListeners<E extends keyof HlsListeners>(event?: E): void;
+
   off<E extends keyof HlsListeners, Context = undefined>(
     event: E,
     listener?: HlsListeners[E],
@@ -384,10 +389,12 @@ export interface HlsEventEmitter {
   ): void;
 
   listeners<E extends keyof HlsListeners>(event: E): HlsListeners[E][];
+
   emit<E extends keyof HlsListeners>(
     event: E,
     name: E,
     eventObject: Parameters<HlsListeners[E]>[1]
   ): boolean;
+
   listenerCount<E extends keyof HlsListeners>(event: E): number;
 }
