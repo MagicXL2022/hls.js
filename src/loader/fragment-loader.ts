@@ -3,11 +3,14 @@ import { Fragment } from './fragment';
 import {
   Loader,
   LoaderConfiguration,
-  FragmentLoaderContext,
+  FragmentLoaderContext
 } from '../types/loader';
 import type { HlsConfig } from '../config';
 import type { BaseSegment, Part } from './fragment';
 import type { FragLoadedData } from '../types/events';
+import { Events } from '../events';
+import Hls from '../hls';
+
 
 const MIN_CHUNK_SIZE = Math.pow(2, 17); // 128kb
 
@@ -15,9 +18,15 @@ export default class FragmentLoader {
   private readonly config: HlsConfig;
   private loader: Loader<FragmentLoaderContext> | null = null;
   private partLoadTimeout: number = -1;
+  private magic: any[];
+  private index: number;
+  private hls: Hls;
 
-  constructor(config: HlsConfig) {
+  constructor(config: HlsConfig, hls: Hls) {
+    this.hls = hls;
     this.config = config;
+    this.magic = [];
+    this.index = 0;
   }
 
   destroy() {
@@ -47,7 +56,7 @@ export default class FragmentLoader {
             details: ErrorDetails.FRAG_LOAD_ERROR,
             fatal: false,
             frag,
-            networkDetails: null,
+            networkDetails: null
           },
           `Fragment does not have a ${url ? 'part list' : 'url'}`
         )
@@ -65,28 +74,58 @@ export default class FragmentLoader {
       }
       const loader =
         (this.loader =
-        frag.loader =
-          FragmentILoader
-            ? new FragmentILoader(config)
-            : (new DefaultILoader(config) as Loader<FragmentLoaderContext>));
+          frag.loader =
+            FragmentILoader
+              ? new FragmentILoader(config)
+              : (new DefaultILoader(config) as Loader<FragmentLoaderContext>));
       const loaderContext = createLoaderContext(frag);
       const loaderConfig: LoaderConfiguration = {
         timeout: config.fragLoadingTimeOut,
         maxRetry: 0,
         retryDelay: 0,
         maxRetryDelay: config.fragLoadingMaxRetryTimeout,
-        highWaterMark: frag.sn === 'initSegment' ? Infinity : MIN_CHUNK_SIZE,
+        highWaterMark: frag.sn === 'initSegment' ? Infinity : MIN_CHUNK_SIZE
       };
       // Assign frag stats to the loader's stats reference
       frag.stats = loader.stats;
+
+
       loader.load(loaderContext, loaderConfig, {
         onSuccess: (response, stats, context, networkDetails) => {
-          this.resetLoader(frag, loader);
+          // if (this.index < 10) this.magic = [...this.magic, response.data];
+          // @ts-ignore
+          this.hls.trigger(Events.RECORDING, { data: response.data });
+          // this.index++;
+          // if (this.index === 10) {
+          //   let length = 0;
+          //   this.magic.forEach(item => {
+          //     console.log('this.magic = item', item);
+          //     length += item.byteLength;
+          //   });
+          //   console.log(`response  length=${length}`);
+          //   // @ts-ignore
+          //   let mergedArray = new Uint8Array(length);
+          //   let offset = 0;
+          //   this.magic.forEach(buffer => {
+          //     mergedArray.set(new Int8Array(buffer), offset);
+          //     offset += buffer.byteLength;
+          //   });
+          //   console.log('mergedArray  response.data = ', mergedArray);
+          //   const aEle = document.createElement('a');
+          //   aEle.style.display = 'none';
+          //   // @ts-ignore
+          //   aEle.href = URL.createObjectURL(new Blob([response.data], { type: 'video/mp4' }));
+          //   aEle.download = 'record.mp4';
+          //   document.body.appendChild(aEle);
+          //   aEle.click();
+          //   window.URL.revokeObjectURL(aEle.href);
+          //   document.body.removeChild(aEle);
+          // }
           resolve({
             frag,
             part: null,
             payload: response.data as ArrayBuffer,
-            networkDetails,
+            networkDetails
           });
         },
         onError: (response, context, networkDetails) => {
@@ -98,7 +137,7 @@ export default class FragmentLoader {
               fatal: false,
               frag,
               response,
-              networkDetails,
+              networkDetails
             })
           );
         },
@@ -110,7 +149,7 @@ export default class FragmentLoader {
               details: ErrorDetails.INTERNAL_ABORTED,
               fatal: false,
               frag,
-              networkDetails,
+              networkDetails
             })
           );
         },
@@ -122,7 +161,7 @@ export default class FragmentLoader {
               details: ErrorDetails.FRAG_LOAD_TIMEOUT,
               fatal: false,
               frag,
-              networkDetails,
+              networkDetails
             })
           );
         },
@@ -132,13 +171,14 @@ export default class FragmentLoader {
               frag,
               part: null,
               payload: data as ArrayBuffer,
-              networkDetails,
+              networkDetails
             });
           }
-        },
+        }
       });
     });
   }
+
 
   public loadPart(
     frag: Fragment,
@@ -157,17 +197,17 @@ export default class FragmentLoader {
       }
       const loader =
         (this.loader =
-        frag.loader =
-          FragmentILoader
-            ? new FragmentILoader(config)
-            : (new DefaultILoader(config) as Loader<FragmentLoaderContext>));
+          frag.loader =
+            FragmentILoader
+              ? new FragmentILoader(config)
+              : (new DefaultILoader(config) as Loader<FragmentLoaderContext>));
       const loaderContext = createLoaderContext(frag, part);
       const loaderConfig: LoaderConfiguration = {
         timeout: config.fragLoadingTimeOut,
         maxRetry: 0,
         retryDelay: 0,
         maxRetryDelay: config.fragLoadingMaxRetryTimeout,
-        highWaterMark: MIN_CHUNK_SIZE,
+        highWaterMark: MIN_CHUNK_SIZE
       };
       // Assign part stats to the loader's stats reference
       part.stats = loader.stats;
@@ -179,7 +219,7 @@ export default class FragmentLoader {
             frag,
             part,
             payload: response.data as ArrayBuffer,
-            networkDetails,
+            networkDetails
           };
           onProgress(partLoadedData);
           resolve(partLoadedData);
@@ -194,7 +234,7 @@ export default class FragmentLoader {
               frag,
               part,
               response,
-              networkDetails,
+              networkDetails
             })
           );
         },
@@ -208,7 +248,7 @@ export default class FragmentLoader {
               fatal: false,
               frag,
               part,
-              networkDetails,
+              networkDetails
             })
           );
         },
@@ -221,10 +261,10 @@ export default class FragmentLoader {
               fatal: false,
               frag,
               part,
-              networkDetails,
+              networkDetails
             })
           );
-        },
+        }
       });
     });
   }
@@ -281,7 +321,7 @@ function createLoaderContext(
     url: segment.url,
     headers: {},
     rangeStart: 0,
-    rangeEnd: 0,
+    rangeEnd: 0
   };
   const start = segment.byteRangeStartOffset;
   const end = segment.byteRangeEndOffset;
@@ -294,6 +334,7 @@ function createLoaderContext(
 
 export class LoadError extends Error {
   public readonly data: FragLoadFailResult;
+
   constructor(data: FragLoadFailResult, ...params) {
     super(...params);
     this.data = data;
