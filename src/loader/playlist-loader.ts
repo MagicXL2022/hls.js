@@ -21,7 +21,7 @@ import type {
   LoaderContext,
   LoaderResponse,
   LoaderStats,
-  PlaylistLoaderContext,
+  PlaylistLoaderContext
 } from '../types/loader';
 import { PlaylistContextType, PlaylistLevelType } from '../types/loader';
 import { LevelDetails } from './level-details';
@@ -31,7 +31,7 @@ import type {
   ErrorData,
   LevelLoadingData,
   ManifestLoadingData,
-  TrackLoadingData,
+  TrackLoadingData
 } from '../types/events';
 
 function mapContextToLevelType(
@@ -152,7 +152,7 @@ class PlaylistLoader {
       responseType: 'text',
       type: PlaylistContextType.MANIFEST,
       url,
-      deliveryDirectives: null,
+      deliveryDirectives: null
     });
   }
 
@@ -165,7 +165,7 @@ class PlaylistLoader {
       responseType: 'text',
       type: PlaylistContextType.LEVEL,
       url,
-      deliveryDirectives,
+      deliveryDirectives
     });
   }
 
@@ -181,7 +181,7 @@ class PlaylistLoader {
       responseType: 'text',
       type: PlaylistContextType.AUDIO_TRACK,
       url,
-      deliveryDirectives,
+      deliveryDirectives
     });
   }
 
@@ -197,7 +197,7 @@ class PlaylistLoader {
       responseType: 'text',
       type: PlaylistContextType.SUBTITLE_TRACK,
       url,
-      deliveryDirectives,
+      deliveryDirectives
     });
   }
 
@@ -289,17 +289,16 @@ class PlaylistLoader {
       maxRetry,
       retryDelay,
       maxRetryDelay,
-      highWaterMark: 0,
+      highWaterMark: 0
     };
 
     const loaderCallbacks = {
       onSuccess: this.loadsuccess.bind(this),
       onError: this.loaderror.bind(this),
-      onTimeout: this.loadtimeout.bind(this),
+      onTimeout: this.loadtimeout.bind(this)
     };
 
     // logger.debug(`[playlist-loader]: Calling internal loader delegate for URL: ${context.url}`);
-
     loader.load(context, loaderConfig, loaderCallbacks);
   }
 
@@ -309,6 +308,8 @@ class PlaylistLoader {
     context: PlaylistLoaderContext,
     networkDetails: any = null
   ): void {
+
+    console.log('response', response);
     if (context.isSidxRequest) {
       this.handleSidxRequest(response, context);
       this.handlePlaylistLoaded(response, stats, context, networkDetails);
@@ -383,12 +384,12 @@ class PlaylistLoader {
     // multi level playlist, parse level info
     const audioGroups = levels.map((level: LevelParsed) => ({
       id: level.attrs.AUDIO,
-      audioCodec: level.audioCodec,
+      audioCodec: level.audioCodec
     }));
 
     const subtitleGroups = levels.map((level: LevelParsed) => ({
       id: level.attrs.SUBTITLES,
-      textCodec: level.textCodec,
+      textCodec: level.textCodec
     }));
 
     const audioTracks = M3U8Parser.parseMasterPlaylistMedia(
@@ -436,7 +437,7 @@ class PlaylistLoader {
           id: -1,
           attrs: new AttrList({}),
           bitrate: 0,
-          url: '',
+          url: ''
         });
       }
     }
@@ -449,7 +450,7 @@ class PlaylistLoader {
       url,
       stats,
       networkDetails,
-      sessionData,
+      sessionData
     });
   }
 
@@ -481,7 +482,7 @@ class PlaylistLoader {
         fatal: false,
         url: url,
         reason: 'no fragments found in level',
-        level: typeof context.level === 'number' ? context.level : undefined,
+        level: typeof context.level === 'number' ? context.level : undefined
       });
       return;
     }
@@ -496,7 +497,7 @@ class PlaylistLoader {
         bitrate: 0,
         details: levelDetails,
         name: '',
-        url,
+        url
       };
 
       hls.trigger(Events.MANIFEST_LOADED, {
@@ -505,7 +506,7 @@ class PlaylistLoader {
         url,
         stats,
         networkDetails,
-        sessionData: null,
+        sessionData: null
       });
     }
 
@@ -528,7 +529,7 @@ class PlaylistLoader {
         rangeStart: 0,
         rangeEnd: 2048,
         responseType: 'arraybuffer',
-        deliveryDirectives: null,
+        deliveryDirectives: null
       });
       return;
     }
@@ -559,8 +560,8 @@ class PlaylistLoader {
       if (frag.byteRange.length === 0) {
         frag.setByteRange(
           String(1 + segRefInfo.end - segRefInfo.start) +
-            '@' +
-            String(segRefInfo.start)
+          '@' +
+          String(segRefInfo.start)
         );
       }
       if (frag.initSegment) {
@@ -583,7 +584,7 @@ class PlaylistLoader {
       reason,
       response,
       context,
-      networkDetails,
+      networkDetails
     });
   }
 
@@ -643,7 +644,7 @@ class PlaylistLoader {
       url: context.url,
       loader,
       context,
-      networkDetails,
+      networkDetails
     };
 
     if (response) {
@@ -666,7 +667,7 @@ class PlaylistLoader {
       groupId,
       loader,
       levelDetails,
-      deliveryDirectives,
+      deliveryDirectives
     } = context;
 
     if (!levelDetails?.targetduration) {
@@ -700,7 +701,7 @@ class PlaylistLoader {
           id: id || 0,
           stats,
           networkDetails,
-          deliveryDirectives,
+          deliveryDirectives
         });
         break;
       case PlaylistContextType.AUDIO_TRACK:
@@ -710,7 +711,7 @@ class PlaylistLoader {
           groupId: groupId || '',
           stats,
           networkDetails,
-          deliveryDirectives,
+          deliveryDirectives
         });
         break;
       case PlaylistContextType.SUBTITLE_TRACK:
@@ -720,7 +721,7 @@ class PlaylistLoader {
           groupId: groupId || '',
           stats,
           networkDetails,
-          deliveryDirectives,
+          deliveryDirectives
         });
         break;
     }
