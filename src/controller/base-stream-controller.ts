@@ -10,18 +10,18 @@ import { alignStream } from '../utils/discontinuities';
 import {
   findFragmentByPDT,
   findFragmentByPTS,
-  findFragWithCC,
+  findFragWithCC
 } from './fragment-finders';
 import {
   getFragmentWithSN,
   getPartWith,
-  updateFragPTSDTS,
+  updateFragPTSDTS
 } from './level-helper';
 import TransmuxerInterface from '../demux/transmuxer-interface';
 import { Fragment, Part } from '../loader/fragment';
 import FragmentLoader, {
   FragmentLoadProgressCallback,
-  LoadError,
+  LoadError
 } from '../loader/fragment-loader';
 import { LevelDetails } from '../loader/level-details';
 import {
@@ -31,7 +31,7 @@ import {
   PartsLoadedData,
   KeyLoadedData,
   MediaAttachingData,
-  BufferFlushingData,
+  BufferFlushingData
 } from '../types/events';
 import Decrypter from '../crypt/decrypter';
 import TimeRanges from '../utils/time-ranges';
@@ -61,13 +61,12 @@ export const State = {
   ENDED: 'ENDED',
   ERROR: 'ERROR',
   WAITING_INIT_PTS: 'WAITING_INIT_PTS',
-  WAITING_LEVEL: 'WAITING_LEVEL',
+  WAITING_LEVEL: 'WAITING_LEVEL'
 };
 
 export default class BaseStreamController
   extends TaskLoop
-  implements NetworkComponentAPI
-{
+  implements NetworkComponentAPI {
   protected hls: Hls;
 
   protected fragPrevious: Fragment | null = null;
@@ -104,21 +103,29 @@ export default class BaseStreamController
     this.log = logger.log.bind(logger, `${logPrefix}:`);
     this.warn = logger.warn.bind(logger, `${logPrefix}:`);
     this.hls = hls;
-    this.fragmentLoader = new FragmentLoader(hls.config);
+    this.fragmentLoader = new FragmentLoader(hls.config, hls);
     this.fragmentTracker = fragmentTracker;
     this.config = hls.config;
     this.decrypter = new Decrypter(hls as HlsEventEmitter, hls.config);
     hls.on(Events.KEY_LOADED, this.onKeyLoaded, this);
+    // @ts-ignore
+    // hls.on(Events.RECORDING, this.onRecording, this);
   }
+
+  // onRecording(event: Events.RECORDING, data: ArrayBuffer) {
+  //   console.log(Events.RECORDING, data);
+  // }
 
   protected doTick() {
     this.onTickEnd();
   }
 
-  protected onTickEnd() {}
+  protected onTickEnd() {
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public startLoad(startPosition: number): void {}
+  public startLoad(startPosition: number): void {
+  }
 
   public stopLoad() {
     this.fragmentLoader.abort();
@@ -292,11 +299,11 @@ export default class BaseStreamController
 
     this.hls =
       this.log =
-      this.warn =
-      this.decrypter =
-      this.fragmentLoader =
-      this.fragmentTracker =
-        null as any;
+        this.warn =
+          this.decrypter =
+            this.fragmentLoader =
+              this.fragmentTracker =
+                null as any;
     super.onHandlerDestroyed();
   }
 
@@ -439,8 +446,8 @@ export default class BaseStreamController
                 payload: decryptedData,
                 stats: {
                   tstart: startTime,
-                  tdecrypt: endTime,
-                },
+                  tdecrypt: endTime
+                }
               });
               data.payload = decryptedData;
 
@@ -475,7 +482,7 @@ export default class BaseStreamController
             stats,
             frag: fragCurrent,
             part: null,
-            id: frag.type,
+            id: frag.type
           });
         }
         this.tick();
@@ -533,7 +540,8 @@ export default class BaseStreamController
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected _handleFragmentLoadProgress(frag: FragLoadedData) {}
+  protected _handleFragmentLoadProgress(frag: FragLoadedData) {
+  }
 
   protected _doFragLoad(
     frag: Fragment,
@@ -570,7 +578,7 @@ export default class BaseStreamController
           this.hls.trigger(Events.FRAG_LOADING, {
             frag,
             part: partList[partIndex],
-            targetBufferTime,
+            targetBufferTime
           });
           return this.doFragPartsLoad(
             frag,
@@ -631,7 +639,7 @@ export default class BaseStreamController
                 return resolve({
                   frag,
                   part: loadedPart,
-                  partsLoaded,
+                  partsLoaded
                 });
               }
             })
@@ -717,7 +725,7 @@ export default class BaseStreamController
       part,
       chunkMeta,
       parent: frag.type,
-      data: buffer,
+      data: buffer
     };
     this.hls.trigger(Events.BUFFER_APPENDING, segment);
 
@@ -1025,8 +1033,8 @@ export default class BaseStreamController
         while (
           fragments[i] &&
           this.fragmentTracker.getState(fragments[i]) ===
-            FragmentState.BACKTRACKED
-        ) {
+          FragmentState.BACKTRACKED
+          ) {
           // When fragPrevious is null, backtrack to first the first fragment is not BACKTRACKED for loading
           // When fragPrevious is set, we want the first BACKTRACKED fragment for parsing and buffering
           if (!fragPrevious) {
@@ -1144,7 +1152,7 @@ export default class BaseStreamController
       details.live &&
       details.canBlockReload &&
       details.tuneInGoal >
-        Math.max(details.partHoldBack, details.partTarget * advancePartLimit)
+      Math.max(details.partHoldBack, details.partTarget * advancePartLimit)
     );
   }
 
@@ -1227,9 +1235,9 @@ export default class BaseStreamController
     const fragCurrent = this.fragCurrent;
     console.assert(
       fragCurrent &&
-        frag.sn === fragCurrent.sn &&
-        frag.level === fragCurrent.level &&
-        frag.urlId === fragCurrent.urlId,
+      frag.sn === fragCurrent.sn &&
+      frag.level === fragCurrent.level &&
+      frag.urlId === fragCurrent.urlId,
       'Frag load error must match current frag to retry'
     );
     const config = this.config;
@@ -1340,13 +1348,13 @@ export default class BaseStreamController
           const drift = partial
             ? 0
             : updateFragPTSDTS(
-                details,
-                frag,
-                info.startPTS,
-                info.endPTS,
-                info.startDTS,
-                info.endDTS
-              );
+              details,
+              frag,
+              info.startPTS,
+              info.endPTS,
+              info.startDTS,
+              info.endDTS
+            );
           this.hls.trigger(Events.LEVEL_PTS_UPDATED, {
             details,
             level,
@@ -1354,7 +1362,7 @@ export default class BaseStreamController
             type,
             frag,
             start: info.startPTS,
-            end: info.endPTS,
+            end: info.endPTS
           });
           return true;
         }
