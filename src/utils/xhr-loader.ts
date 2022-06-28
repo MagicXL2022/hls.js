@@ -4,7 +4,7 @@ import type {
   LoaderContext,
   LoaderStats,
   Loader,
-  LoaderConfiguration,
+  LoaderConfiguration
 } from '../types/loader';
 import { LoadStats } from '../loader/load-stats';
 
@@ -169,12 +169,15 @@ class XhrLoader implements Loader<LoaderContext> {
             stats.loading.first
           );
           let data;
+          let ts_data;
           let len: number;
           if (context.responseType === 'arraybuffer') {
             data = xhr.response;
             len = data.byteLength;
+            ts_data = data.slice(0);
           } else {
             data = xhr.responseText;
+            ts_data = xhr.responseText;
             len = data.length;
           }
           stats.loaded = stats.total = len;
@@ -191,7 +194,7 @@ class XhrLoader implements Loader<LoaderContext> {
           }
           const response = {
             url: xhr.responseURL,
-            data: data,
+            data: ts_data
           };
 
           this.callbacks.onSuccess(response, stats, context, xhr);
@@ -269,6 +272,50 @@ class XhrLoader implements Loader<LoaderContext> {
     }
     return result;
   }
+
+  deepClone(obj) {
+    const _toString = Object.prototype.toString;
+    // null, undefined, non-object, function
+    if (!obj || typeof obj !== 'object') {
+      return obj;
+    }
+    // DOM Node
+    if (obj.nodeType && 'cloneNode' in obj) {
+      return obj.cloneNode(true);
+    }
+
+    // Date
+    if (_toString.call(obj) === '[object Date]') {
+      return new Date(obj.getTime());
+    }
+
+    // RegExp
+    if (_toString.call(obj) === '[object RegExp]') {
+      const flags = [];
+      if (obj.global) {
+        // @ts-ignore
+        flags.push('g');
+      }
+      if (obj.multiline) {
+        // @ts-ignore
+        flags.push('m');
+      }
+      if (obj.ignoreCase) {
+        // @ts-ignore
+        flags.push('i');
+      }
+
+      return new RegExp(obj.source, flags.join(''));
+    }
+
+    const result = Array.isArray(obj) ? [] : obj.constructor ? new obj.constructor() : {};
+
+    for (const key in obj) {
+      result[key] = this.deepClone(obj[key]);
+    }
+    return result;
+  }
+
 }
 
 export default XhrLoader;
